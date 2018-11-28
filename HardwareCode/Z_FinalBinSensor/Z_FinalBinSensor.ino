@@ -112,6 +112,7 @@ void setup() {
 }
 
 void loop() {
+  readDHT22Readiings();
   checkAllInterrupts();
   readAvgScaleReadings(5);
   checkAllInterrupts();
@@ -127,11 +128,11 @@ void loop() {
   readvalues = readvalues + ",MQ2=" + String(GasSensorValues[0]) + ",MQ3=" + String(GasSensorValues[1]) + ",MQ4=" + String(GasSensorValues[2]);
   readvalues = readvalues + ",MQ5=" + String(GasSensorValues[3]) + ",MQ6=" + String(GasSensorValues[4]) + ",MQ7=" + String(GasSensorValues[5]);
   readvalues = readvalues + ",MQ8=" + String(GasSensorValues[6]) + ",MQ9=" + String(GasSensorValues[7]) + ",MQ135=" + String(GasSensorValues[8]);
-  readvalues = readvalues + ",Distance=" + String(Distance) + ",Weight=" + String(Weight);
+  readvalues = readvalues + ",DistanceLeft=" + String(Distance1) +",DistanceRight=" + String(Distance2) + ",Weight=" + String(Weight);
   readvalues = readvalues  + ",LidStatus=" + String(LidStatusNow) + ",ImageTriggered=" + String(triggerImage);
   Serial.println(readvalues);
   sendData(readvalues);
-  delay(1000); // Print value every 1 sec.
+  delay(4000); // Print value every 1 sec.
 }
 
 void initWifi() {
@@ -198,9 +199,15 @@ boolean sendData(String postStr) {
   return sendOk;
 }
 
-void readAvgDHT22Readiings() {
+void readDHT22Readiings() {
   Humidity = dht.readHumidity();
   Temperature = dht.readTemperature() - 4;
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(Humidity) || isnan(Temperature)) {
+    Serial.println("Failed to read from DHT sensor!");
+    Humidity = 0.0;
+    Temperature = 0.0;
+  }
 
 }
 
@@ -375,8 +382,3 @@ void printWifiStatus()
   Serial.print(rssi);
   Serial.println(" dBm");
 }
-//// Emulate Serial1 on pins 6/7 if not present
-//#ifndef HAVE_HWSERIAL1
-//#include "SoftwareSerial.h"
-//SoftwareSerial Serial1(6, 7); // RX, TX
-//#endif
