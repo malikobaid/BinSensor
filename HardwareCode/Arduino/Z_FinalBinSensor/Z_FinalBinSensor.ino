@@ -21,6 +21,7 @@
 #define SCALE_SCK_PIN 10                              // Blue Wire in Prototype
 #define SCALE_CALIBRATION_FACTOR 10425.25             // Calilbaration Factor for the Weight Scale
 #define LIDINTERRUPTPIN 2                             // The ADXL345 (Accelerometer for detecting Bin Lid open and close Events) will trigger interrupt on Arduino Mega digital pin 2
+#define LIDEVENTLED 5
 #define DHTPIN 8                                      // DHT22 (Temperature and Humidity Sensor) is connected to Arduino Mega digital pin 8
 #define DHTTYPE DHT22                                 // DHT 22  (AM2302), AM2321, The type of DHT sensor being used
 #define DEBUG true                                    // Global Flag to disable Serial printing in deployment mode
@@ -50,7 +51,6 @@ int GasSensorPins[] = {A0, A1, A2, A3, A4, A5, A6, A7, A8}; // Pins for MQ gas S
 //Accelerometer for Lid open and close event detection
 ADXL345 adxl = ADXL345();                             // Declaration ADXL345 (Accelerometer for detecting Bin Lid open and close Events) using I2C COMMUNICATION, uses pin 20 (SDA) and 21 (SCL) on Arduino mega
 volatile boolean lidActivity = false;                 // flag to detect if there is a change in the lid state
-int lidEventLED = 53;
 int LidStatusNow = 1;                                 // Current status of the bin lid (0 Open, 1 Closed)
 int LidPreviousStatus = 1;                            // Previous status of the bin lid (0 Open, 1 Closed)
 unsigned long lastLidInterrupt;                       // Time in mili secs when last lid interrupt occured
@@ -120,10 +120,6 @@ void loop() {
   checkAllInterrupts();
   readAvgGasSensor(10);
   checkAllInterrupts();
-  if (triggerImage) {
-    Serial.println("Take Image");
-    triggerImage = false;
-  }
   String readvalues = "SensorData,SensorID=" + String(SensorID) + " Temperature=" + String(Temperature) + ",Humidity=" + String(Humidity);
   readvalues = readvalues + ",MQ2=" + String(GasSensorValues[0]) + ",MQ3=" + String(GasSensorValues[1]) + ",MQ4=" + String(GasSensorValues[2]);
   readvalues = readvalues + ",MQ5=" + String(GasSensorValues[3]) + ",MQ6=" + String(GasSensorValues[4]) + ",MQ7=" + String(GasSensorValues[5]);
@@ -132,6 +128,10 @@ void loop() {
   readvalues = readvalues  + ",LidStatus=" + String(LidStatusNow) + ",ImageTriggered=" + String(triggerImage);
   Serial.println(readvalues);
   sendData(readvalues);
+  if (triggerImage) {
+    Serial.println("Take Image");
+    triggerImage = false;
+  }
   delay(4000); // Print value every 4 sec.
 }
 
@@ -302,16 +302,14 @@ void checkBinLidStatus() {
   byte interrupts = adxl.getInterruptSource();
   if (lidActivity) {
     if (adxl.triggered(interrupts, ADXL345_ACTIVITY)) {
-      digitalWrite(lidEventLED, HIGH);
-      delay(500);
-      digitalWrite(lidEventLED, LOW);
-
+      doblink(LIDEVENTLED,2,250);
+      
       if (y < 0) { //Lid is closed 0 Open, 1 Closed
         LidStatusNow = 1;
       } else if (y > 150) {
         LidStatusNow = 0;
       }
-      Serial.println(String(x) + "," + String(y) + "," + String(z) + " Lid Now " + String(LidStatusNow) + " Lid Previously " + String(LidPreviousStatus));
+      Serial.println(String(x)+","+String(y)+","+String(z)+" Lid Now " +String(LidStatusNow)+" Lid Previously "+String(LidPreviousStatus));
       if ((LidPreviousStatus == 0) && (LidStatusNow == 1)) {
         triggerImage = true;
       }
