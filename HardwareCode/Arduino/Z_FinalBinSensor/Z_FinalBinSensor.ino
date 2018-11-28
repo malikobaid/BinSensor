@@ -132,7 +132,7 @@ void loop() {
   readvalues = readvalues  + ",LidStatus=" + String(LidStatusNow) + ",ImageTriggered=" + String(triggerImage);
   Serial.println(readvalues);
   sendData(readvalues);
-  delay(4000); // Print value every 1 sec.
+  delay(4000); // Print value every 4 sec.
 }
 
 void initWifi() {
