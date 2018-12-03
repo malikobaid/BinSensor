@@ -24,7 +24,6 @@
 #define LIDEVENTLED 5
 #define DHTPIN 8                                      // DHT22 (Temperature and Humidity Sensor) is connected to Arduino Mega digital pin 8
 #define DHTTYPE DHT22                                 // DHT 22  (AM2302), AM2321, The type of DHT sensor being used
-#define DEBUG true                                    // Global Flag to disable Serial printing in deployment mode
 String SERVER = "178.159.10.106";                     // InfluxDB server to post data too
 int PORT = 8086;
 
@@ -126,7 +125,9 @@ void loop() {
   readvalues = readvalues + ",MQ8=" + String(GasSensorValues[6]) + ",MQ9=" + String(GasSensorValues[7]) + ",MQ135=" + String(GasSensorValues[8]);
   readvalues = readvalues + ",DistanceLeft=" + String(Distance1) +",DistanceRight=" + String(Distance2) + ",Weight=" + String(Weight);
   readvalues = readvalues  + ",LidStatus=" + String(LidStatusNow) + ",ImageTriggered=" + String(triggerImage);
-  Serial.println(readvalues);
+//  if(DEBUG){
+//    Serial.println(readvalues);
+//  }
   sendData(readvalues);
   if (triggerImage) {
     Serial.println("Take Image");
@@ -154,9 +155,7 @@ void initWifi() {
   if (status == WL_CONNECTED) {
     Serial.println("You're connected to the network");
   }
-  if (DEBUG) {
-    printWifiStatus();
-  }
+  printWifiStatus();
 }
 
 boolean sendData(String postStr) {
