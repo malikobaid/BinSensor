@@ -20,7 +20,7 @@
 #define SCALE_SCK_PIN 10                              // Blue Wire in Prototype
 #define SCALE_CALIBRATION_FACTOR 10425.25             // Calilbaration Factor for the Weight Scale
 #define LIDINTERRUPTPIN 2                             // The ADXL345 (Accelerometer for detecting Bin Lid open and close Events) will trigger interrupt on Arduino Mega digital pin 2
-#define LIDEVENTLED 5
+#define IMAGEINTERRUPTPIN 41                          // Pin Connected to Pizero Interrupt (GPIO26) to start image capture and upload
 #define DHTPIN 8                                      // DHT22 (Temperature and Humidity Sensor) is connected to Arduino Mega digital pin 8
 #define DHTTYPE DHT22                                 // DHT 22  (AM2302), AM2321, The type of DHT sensor being used
 String SERVER = "178.159.10.106";                     // InfluxDB server to post data too
@@ -87,6 +87,9 @@ void setup() {
   pinMode(TRIGGER_PIN2, OUTPUT);
   pinMode(ECHO_PIN2, INPUT);
 
+  pinMode(IMAGEINTERRUPTPIN,OUTPUT);
+  digitalWrite(IMAGEINTERRUPTPIN,LOW);
+  
   scale.set_scale();
   scale.tare(); //Reset the scale to 0
   delay(500);
@@ -304,7 +307,7 @@ void checkBinLidStatus() {
       
       if (y < 0) { //Lid is closed 0 Open, 1 Closed
         LidStatusNow = 1;
-      } else if (y > 150) {
+      } else if (y > 100) {
         LidStatusNow = 0;
       }
       Serial.println(String(x)+","+String(y)+","+String(z)+" Lid Now " +String(LidStatusNow)+" Lid Previously "+String(LidPreviousStatus));
@@ -327,6 +330,9 @@ void lidEvent() {
   {
     lastLidInterrupt = millis();
     lidActivity = true;
+    digitalWrite(IMAGEINTERRUPTPIN,HIGH);
+    delay(5);
+    digitalWrite(IMAGEINTERRUPTPIN,LOW);
   }
 
 }
